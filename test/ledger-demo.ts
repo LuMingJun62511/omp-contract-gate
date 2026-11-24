@@ -11,7 +11,7 @@
  *   node test/ledger-demo.ts
  */
 
-import { precheck, inferLineage, isSampled, lineageRoots, parseCmdLineage, opOf } from "../contract-gate.ts";
+import { precheck, inferLineage, isSampled, lineageRoots, parseCmdLineage, opOf, buildPack } from "../contract-gate.ts";
 import type { LedgerEvent, Contract } from "../contract-gate.ts";
 
 const cmds = [
@@ -71,4 +71,14 @@ console.log(`  不给血缘: ${without.length ? "打回" : "放行  ← 只看 m
 without.forEach((v) => console.log(`      ${v.reason}`));
 console.log(`  给血缘  : ${withL.length ? "打回" : "放行"}`);
 withL.forEach((v) => console.log(`      ${v.reason}`));
+
+// 关键：即使在信息最少的变体下，血缘也照样在证据包里
+const pack = buildPack(c, "mask_both", lineage);
+console.log("\n=== mask_both（遮过程 + 遮自述）下，证据包里血缘仍在 ===");
+console.log(
+  pack
+    .split("\n")
+    .filter((l) => /血缘|←|已遮/.test(l))
+    .join("\n"),
+);
 console.log();

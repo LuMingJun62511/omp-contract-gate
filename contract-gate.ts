@@ -360,7 +360,7 @@ export function precheck(c: Contract, lineage?: Lineage): Verdict[] {
 
 /* ────────────────────── 4. 证据包 + 裁判 ────────────────────── */
 
-export function buildPack(c: Contract, mode: EvidenceMode = CFG.mode): string {
+export function buildPack(c: Contract, mode: EvidenceMode = CFG.mode, lineage?: Lineage): string {
   const keep = KEEP[mode];
   const L: string[] = [];
 
@@ -382,19 +382,43 @@ export function buildPack(c: Contract, mode: EvidenceMode = CFG.mode): string {
   L.push(`与上次运行的差异：${c.diffFromLastRun || "(空)"}`);
   L.push(`与 skill 默认路径的偏离：${c.skillDeviations || "(空)"}`);
 
+  /**
+   * 血缘属于「事实」列，**永远给，不进 2×2 的任一维度**。
+   * 它和 resolved 值同性质：不由模型自述，由观察期观测。
+   * 遮掉它等于把判据遮掉，那不是实验，是自残。
+   */
+  if (lineage) {
+    const rows = [...(c.inputs ?? []), ...(c.outputs ?? [])]
+      .map((r) => {
+        const p = r.resolved?.path;
+        if (!p) return null;
+        const e = lineage[p];
+        if (!e) return null;
+        return `  - ${p} ← ${e.from.join(", ") || "(无来源)"}   [${e.ops.join(", ")}]`;
+      })
+      .filter(Boolean) as string[];
+    if (rows.length) {
+      L.push("", "=== 4. 数据血缘（程序观测，不是模型自述）===");
+      L.push(...rows);
+    }
+  }
+
   if (keep.trace && c.trace?.length) {
-    L.push("", "=== 4. 工具调用轨迹（过程，程序记录）===");
+    L.push("", "=== 5. 工具调用轨迹（过程，程序记录）===");
     for (const t of c.trace) {
       L.push(`- ${t.tool}: ${t.call}${t.filesRead?.length ? `  «读 ${t.filesRead.join(", ")}»` : ""}`);
     }
   }
 
   if (keep.rationale && c.rationale) {
-    L.push("", "=== 5. 规划者自述（注意：这是被审查方的辩解，不是事实）===");
+    L.push("", "=== 6. 规划者自述（注意：这是被审查方的辩解，不是事实）===");
     L.push(c.rationale);
   }
 
-  L.push("", `（证据变体：${mode} · 轨迹${keep.trace ? "已含" : "已遮"} · 自述${keep.rationale ? "已含" : "已遮"}）`);
+  L.push(
+    "",
+    `（证据变体：${mode} · 轨迹${keep.trace ? "已含" : "已遮"} · 自述${keep.rationale ? "已含" : "已遮"} · 血缘/文件事实恒在）`,
+  );
   return L.join("\n");
 }
 
@@ -443,7 +467,8 @@ export async function runJudge(c: Contract, cwd: string): Promise<Verdict> {
       : { verdict: "escalate", reason: "未配置裁判模型（CG_JUDGE_BASE_URL / CG_JUDGE_MODEL）", by: "fallback" };
   }
 
-  const pack = buildPack(c);
+  const lineage = CFG.observe ? inferLineage(await loadLedger(cwd)) : undefined;
+  const pack = buildPack(c, CFG.mode, lineage);
   const body = {
     model,
     temperature: 0,
