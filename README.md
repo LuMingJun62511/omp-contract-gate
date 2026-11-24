@@ -26,7 +26,20 @@ agent：好的（沿用了 skill 里挂着的 smoke 数据集）
 
 这个仓库补的就是那一环。
 
-## 2. 三层拦截（从便宜到贵）
+## 2. 四层拦截 + 一层观察（从便宜到贵）
+
+**观察期（不在放行链上）**：从会话第一轮起，把所有工具调用记进 `.agent/ledger/events.jsonl`，并从中推出**数据血缘**：
+
+```
+data/smoke/eval.jsonl  ←  data/full/eval.jsonl   [sample]
+data/smoke/train.jsonl ←  data/full/train.jsonl  [sample]
+```
+
+> 为什么必须有这层：`smoke 集是从全量集随机抽 100 条来的` 这条信息，在契约里没有、在 manifest 里没有，**只在当时的命令里**。等真跑全量时再问模型"这数据哪来的"，得到的是模型的回忆，不是事实。
+
+```bash
+node test/ledger-demo.ts   # 看它怎么只凭命令就把"smoke 当全量"判出来
+```
 
 | 层 | 做什么 | 成本 | 准确率 |
 |---|---|---|---|
@@ -117,6 +130,7 @@ node test/replay/run.ts --print    # 顺便打印证据包，肉眼看遮掉了�
 - 指代词（训练集/测试集/数据集/权重…）没有落到具体路径 → 打回
 - 路径不存在 → 打回
 - 指令含「全量/完整/full」，但数据 `purpose=smoke` → 打回
+- 指令含「全量/完整/full」，但数据是**抽样/切分产物**（血缘链含 `head -n` / `shuf` / `split` / `sample`）→ 打回
 - 实测行数与 manifest 声明不符（文件被替换过）→ 打回
 - 缺 `intent` / `plan` / `diffFromLastRun` → 打回
 
@@ -196,6 +210,8 @@ export CG_JUDGE_MODEL=<与规划模型不同族的模型>
 | `CG_MAX_ATTEMPTS` | `2` | 同一契约自动判定上限，超了强制转人工 |
 | `CG_CONTRACT` | `.agent/contracts/current.json` | 契约文件路径 |
 | `CG_MANIFEST` | `.agent/manifest.json` | 数据集清单路径 |
+| `CG_LEDGER` | `.agent/ledger/events.jsonl` | 观察期账本路径 |
+| `CG_OBSERVE` | 开 | `0` = 关掉观察期（不建议，关了就丢失血缘） |
 
 ## 8. 两个阶段
 

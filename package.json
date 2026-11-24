@@ -9,6 +9,7 @@
   },
   "scripts": {
     "replay": "node test/replay/run.ts",
-    "replay:narrate": "node test/replay/run.ts --print"
+    "replay:narrate": "node test/replay/run.ts --print",
+    "demo": "node test/ledger-demo.ts"
   }
 }
