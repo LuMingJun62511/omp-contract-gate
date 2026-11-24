@@ -122,24 +122,41 @@ node test/replay/run.ts --print    # 顺便打印证据包，肉眼看遮掉了�
 
 `manifest.example.json` 是这套判定的力量来源：**模型负责去看，这张表负责知道该看什么。** 缺了它，裁判只会得出「路径存在、有数据、格式正确」然后放行。
 
-## 7. 安装
+## 7. 装配件
 
-### 家里（OpenCode / 本地 omp）
+### 7.1 三个安装位置，选哪个
+
+| 位置 | 路径 | 生效范围 | 谁需要配合 |
+|---|---|---|---|
+| **项目级** ← 推荐 | `<项目>/.omp/hooks/pre/contract-gate.ts` | 只在这个项目 | **没人**，磁盘发现 |
+| 用户级 | `~/.omp/agent/hooks/pre/contract-gate.ts` | 你所有项目 | 没人，磁盘发现 |
+| 单次 | `omp --hook <绝对路径>/contract-gate.ts` | 这一次启动 | **启动它的那个东西**要替你传参 |
 
 ```bash
-# 不安装，直接跑单个项目
-omp --hook /abs/path/omp-contract-gate/contract-gate.ts
-
-# 或装进项目（自动发现，注意必须在 pre/ 子目录）
-cp contract-gate.ts <项目>/.omp/hooks/pre/
-cp manifest.example.json <项目>/.agent/manifest.json
+# 项目级（推荐）
+mkdir -p .omp/hooks/pre .agent
+cp /path/to/omp-contract-gate/contract-gate.ts .omp/hooks/pre/
+cp /path/to/omp-contract-gate/manifest.example.json .agent/manifest.json
 ```
 
-### 公司（omp 及其 fork）
+**为什么拉项目级，而不是 `--hook`**：
 
-> ⚠️ 公司的 omp 是二次开发版，**先用 5 分钟验证 API 面**（见第 9 节），再全面铺开。
+> 再封装层（GUI、编排器、docker、公司的 fork）经常有自己的一套启动参数，你改不动。`--hook` 依赖**调用方替你传参**；`.omp/hooks/pre/` 是**磁盘发现**——不管谁启动 omp、从哪个 cwd 启动，只要发现没被关掉就会加载。
 
-裁判是**独立的 OpenAI 兼容端点**，不依赖 omp 内部：
+两个细节：
+
+- **必须在 `pre/` 或 `post/` 子目录里**。放在 `.omp/hooks/contract-gate.ts` 会**静默不加载**（发现不递归）。
+- 改完要**新开一个会话**才生效。
+
+### 7.2 被别的程序封装时（GUI / 编排器 / 容器 / SDK）
+
+| 封装方式 | 插件还能不能用 | 要注意 |
+|---|---|---|
+| 进程外包装（Orca、omp-studio、ompweb、docker） | ✅ 能 | 它只是启动 `omp`，hook 在 omp 进程内加载。容器的话装进它挂载的那个 `~/.omp` 卷 |
+| SDK 嵌入（`createAgentSession()`） | ⚠️ 看写法 | `hooks: [...]` 是**替换**发现结果，`additionalHookPaths: [...]` 才是**追加**。宿主写 `hooks: []` 会让插件静默消失 |
+| fork 后重写（公司二次开发版） | ⚠️ 看事件总线 | 保留 `tool_call` / `tool_result` 就还在链路上；改了事件名或返回值语义就要动适配层（`docs/DESIGN.md` 7.2） |
+
+### 7.3 配裁判（独立端点）
 
 ```bash
 export CG_JUDGE_BASE_URL=https://your-endpoint/v1
@@ -148,6 +165,37 @@ export CG_JUDGE_MODEL=<与规划模型不同族的模型>
 ```
 
 **为什么必须换族**：同一模型既规划又自评，结构上会把卷子批成对的。
+
+不配裁判也能跑——只是**只能靠硬校验**，且遇到需要语义判断的会 `escalate` 转人工（默认 fail-closed，不会静默放行）。
+
+### 7.4 五分钟验证清单
+
+装完按这个顺序验，任何一步不对就先停下来：
+
+| # | 动作 | 期望 |
+|---|---|---|
+| 1 | `omp --version`，然后新开会话 | 启动无报错 |
+| 2 | 让它跑 `ls` | **正常执行**（取证豁免） |
+| 3 | 让它跑 `python train.py` | **被拦**，提示"未登记契约" |
+| 4 | 让它写 `.agent/contracts/current.json` | **放行**（契约路径豁免） |
+| 5 | 再跑 `python train.py` | 过了硬校验才放行；不过则给出打回理由 |
+
+第 3、4 步如果都不成立，说明 hook 根本没加载——回去看 7.1 的 `pre/` 子目录。第 3 步拦了但**理由不对**，多半是 `event.input` 字段名不同（代码已兜 `path`/`file_path`/`filePath`/`file`）。
+
+### 7.5 环境变量总表
+
+| 变量 | 默认 | 说明 |
+|---|---|---|
+| `CG_MODE` | `mask_advocacy` | 证据变体：`full` / `mask_advocacy` / `mask_trace` / `mask_both` |
+| `CG_JUDGE_BASE_URL` | 空 | OpenAI 兼容端点 |
+| `CG_JUDGE_API_KEY` | 空 | |
+| `CG_JUDGE_MODEL` | 空 | 建议与规划模型不同族 |
+| `CG_TOOLS` | `bash,write,edit` | 受闸工具 |
+| `CG_DISABLE` | — | `1` = 关掉整个闸（闸写错时救命用） |
+| `CG_ON_NO_JUDGE` | `escalate` | 没配裁判时：`escalate` 转人工 / `allow` 放行 |
+| `CG_MAX_ATTEMPTS` | `2` | 同一契约自动判定上限，超了强制转人工 |
+| `CG_CONTRACT` | `.agent/contracts/current.json` | 契约文件路径 |
+| `CG_MANIFEST` | `.agent/manifest.json` | 数据集清单路径 |
 
 ## 8. 两个阶段
 
