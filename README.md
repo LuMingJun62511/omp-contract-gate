@@ -6,6 +6,8 @@
 不是防模型乱来——是防**人**退化。
 
 > 📐 **要二次开发，先读 [`docs/DESIGN.md`](docs/DESIGN.md)** —— 那里写了为什么这么设计、状态机、决策记录（ADR）、以及在公司 fork 上要改哪三处。
+>
+> 🔬 **如果 A（读命令猜血缘）在公司误报太多**，看 [`docs/PLAN-B-DRYRUN.md`](docs/PLAN-B-DRYRUN.md)：让训推脚本自己吐一份 `resolved.json`，带三个场景、可运行 demo、施工图。`node test/plan-b/demo.ts` 三十秒看懂。
 
 ---
 
@@ -254,6 +256,8 @@ CG_TOOLS=bash,write,edit        # 受闸工具
 contract-gate.ts          ← 插件本体（单文件、零依赖、可直接拷走）
 manifest.example.json     ← 数据集清单模板（判定的力量来源）
 docs/DESIGN.md            ← 设计说明：第一原则 / 状态机 / ADR / 二次开发指南
+docs/PLAN-B-DRYRUN.md     ← B 方案：让脚本自己说（三个场景 + 可运行 demo + 施工图）
+test/plan-b/              ← B 的 demo、dry-run 脚本、两套 config
 test/replay/run.ts        ← 变体对比 harness
 test/replay/cases/*/      ← 回放用例（真实事故 + 对照组）
 ```

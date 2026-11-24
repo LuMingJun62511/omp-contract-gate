@@ -1,0 +1,25 @@
+{
+  "project": "qwen3.5-mindspeed",
+  "stage": "train",
+  "scope": "smoke",
+  "data": [
+    {
+      "role": "train",
+      "path": "data/smoke/train.jsonl",
+      "purpose": "smoke"
+    },
+    {
+      "role": "eval",
+      "path": "data/smoke/eval.jsonl",
+      "purpose": "smoke",
+      "derived_from": ["data/full/eval.jsonl"],
+      "derivation": "从全量评测集随机抽 20 条"
+    }
+  ],
+  "params": {
+    "max_steps": 100,
+    "batch_size": 1,
+    "seq_length": 2048
+  },
+  "output_dir": "out/smoke-ckpt"
+}

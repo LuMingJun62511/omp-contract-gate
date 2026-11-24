@@ -10,6 +10,7 @@
   "scripts": {
     "replay": "node test/replay/run.ts",
     "replay:narrate": "node test/replay/run.ts --print",
-    "demo": "node test/ledger-demo.ts"
+    "demo": "node test/ledger-demo.ts",
+    "demo:b": "node test/plan-b/demo.ts"
   }
 }

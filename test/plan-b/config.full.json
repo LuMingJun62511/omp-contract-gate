@@ -1,0 +1,23 @@
+{
+  "project": "qwen3.5-mindspeed",
+  "stage": "train",
+  "scope": "full",
+  "data": [
+    {
+      "role": "train",
+      "path": "data/full/train.jsonl",
+      "purpose": "full"
+    },
+    {
+      "role": "eval",
+      "path": "data/full/eval.jsonl",
+      "purpose": "eval"
+    }
+  ],
+  "params": {
+    "max_steps": 20000,
+    "batch_size": 32,
+    "seq_length": 8192
+  },
+  "output_dir": "out/full-ckpt"
+}
