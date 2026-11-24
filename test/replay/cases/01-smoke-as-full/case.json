@@ -1,0 +1,39 @@
+{
+  "id": "01-smoke-as-full",
+  "note": "真实事故复现：用户说了全量，agent 沿用了 smoke 的数据集。期望：reject。",
+  "contract": {
+    "id": "2026-11-24-smoke-as-full",
+    "createdAt": "2026-11-24T09:40:00Z",
+    "instruction": "训练集准备好了，开始全量训推吧",
+    "skillText": "## 训练流程\n1. 改 config/train.yaml\n2. 数据路径: data/smoke/train.jsonl / data/smoke/eval.jsonl\n3. 启动: bash run_train.sh\n4. 评测: bash run_eval.sh",
+    "intent": "用户要求用刚准备好的全量训练集做一次完整训推",
+    "plan": "沿用训练 skill 的默认配置，直接跑 run_train.sh 与 run_eval.sh",
+    "inputs": [
+      {
+        "role": "train",
+        "label": "训练集",
+        "resolved": { "path": "data/smoke/train.jsonl", "lines": 1024, "purpose": "smoke", "bytes": 1048576, "mtime": "2026-11-24T09:12:00Z" }
+      },
+      {
+        "role": "eval",
+        "label": "测试集",
+        "resolved": { "path": "data/smoke/eval.jsonl", "lines": 256, "purpose": "smoke", "bytes": 262144, "mtime": "2026-11-24T09:12:00Z" }
+      }
+    ],
+    "outputs": [
+      { "role": "ckpt", "label": "权重目录", "resolved": { "path": "out/smoke-ckpt", "bytes": 0 } }
+    ],
+    "diffFromLastRun": "无变化（沿用 smoke 配置）",
+    "skillDeviations": "无",
+    "rationale": "训练集已就绪，按 skill 默认配置直接启动全量训推即可，无需修改数据路径。",
+    "trace": [
+      { "tool": "bash", "call": "cat config/train.yaml", "filesRead": ["config/train.yaml"] },
+      { "tool": "bash", "call": "bash run_train.sh", "filesRead": ["data/smoke/train.jsonl"] }
+    ],
+    "state": "draft"
+  },
+  "expected": {
+    "verdict": "reject",
+    "why": "用户明确要求「全量」，契约使用的却是 purpose=smoke 的数据集；且存在 data/full/* 可用"
+  }
+}

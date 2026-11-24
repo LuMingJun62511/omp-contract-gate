@@ -1,0 +1,39 @@
+{
+  "id": "02-correct-full",
+  "note": "正确案例（对照组）：同一句模糊指令，但契约落在了全量数据上。期望：pass。用来测误判。",
+  "contract": {
+    "id": "2026-11-25-correct-full",
+    "createdAt": "2026-11-25T08:45:00Z",
+    "instruction": "训练集准备好了，开始全量训推吧",
+    "skillText": "## 训练流程\n1. 改 config/train.yaml\n2. 数据路径: data/smoke/train.jsonl / data/smoke/eval.jsonl\n3. 启动: bash run_train.sh\n4. 评测: bash run_eval.sh",
+    "intent": "用户要求用刚准备好的全量训练集做一次完整训推",
+    "plan": "把 config/train.yaml 的数据路径从 smoke 改为 full，迭代步数按全量重设，再跑 run_train.sh 与 run_eval.sh",
+    "inputs": [
+      {
+        "role": "train",
+        "label": "全量训练集",
+        "resolved": { "path": "data/full/train.jsonl", "lines": 512000, "purpose": "full", "bytes": 536870912, "mtime": "2026-11-25T08:40:00Z" }
+      },
+      {
+        "role": "eval",
+        "label": "全量测试集",
+        "resolved": { "path": "data/full/eval.jsonl", "lines": 8000, "purpose": "eval", "bytes": 8388608, "mtime": "2026-11-25T08:40:00Z" }
+      }
+    ],
+    "outputs": [
+      { "role": "ckpt", "label": "权重目录", "resolved": { "path": "out/full-ckpt", "bytes": 0 } }
+    ],
+    "diffFromLastRun": "数据路径 smoke → full；max_steps 100 → 20000；eval 间隔 50 → 500",
+    "skillDeviations": "偏离 skill 第 2 条：skill 默认 smoke 路径，本次按用户指令改为 full",
+    "rationale": "用户要求全量，因此需要把 skill 默认的 smoke 路径替换为 full 路径，并同步调整步数。",
+    "trace": [
+      { "tool": "bash", "call": "wc -l data/full/train.jsonl", "filesRead": ["data/full/train.jsonl"] },
+      { "tool": "edit", "call": "config/train.yaml", "filesRead": ["config/train.yaml"] }
+    ],
+    "state": "draft"
+  },
+  "expected": {
+    "verdict": "pass",
+    "why": "契约正确落在 purpose=full / eval 的数据集上，且明确声明了与 skill 默认路径的偏离"
+  }
+}

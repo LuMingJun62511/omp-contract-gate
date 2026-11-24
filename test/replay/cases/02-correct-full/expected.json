@@ -1,0 +1,4 @@
+{
+  "verdict": "pass",
+  "why": "契约正确落在 purpose=full / eval 的数据集上，且声明了与 skill 默认路径的偏离"
+}

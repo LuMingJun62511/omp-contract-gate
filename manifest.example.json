@@ -1,0 +1,15 @@
+{
+  "_comment": "复制到项目里的 .agent/manifest.json。这张表是判定的力量来源：模型负责去看，这张表负责知道该看什么。",
+  "datasets": [
+    { "path": "data/smoke/train.jsonl", "purpose": "smoke", "expected_lines": 1024, "note": "冒烟测试专用" },
+    { "path": "data/smoke/eval.jsonl",  "purpose": "smoke", "expected_lines": 256 },
+    { "path": "data/full/train.jsonl",  "purpose": "full",  "expected_lines": 512000 },
+    { "path": "data/full/eval.jsonl",   "purpose": "eval",  "expected_lines": 8000 }
+  ],
+  "aliases": {
+    "全量训练集": "data/full/train.jsonl",
+    "全量测试集": "data/full/eval.jsonl",
+    "冒烟训练集": "data/smoke/train.jsonl",
+    "冒烟测试集": "data/smoke/eval.jsonl"
+  }
+}

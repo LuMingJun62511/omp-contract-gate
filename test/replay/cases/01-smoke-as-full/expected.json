@@ -1,0 +1,4 @@
+{
+  "verdict": "reject",
+  "why": "用户明确要求「全量」，契约使用的却是 purpose=smoke 的数据集"
+}

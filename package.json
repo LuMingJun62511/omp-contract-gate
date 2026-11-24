@@ -1,0 +1,14 @@
+{
+  "name": "omp-contract-gate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "执行前的可驳回契约（plan gate）：取证 → 独立裁判 → 硬闸 → 留痕",
+  "omp": {
+    "extensions": ["./contract-gate.ts"]
+  },
+  "scripts": {
+    "replay": "node test/replay/run.ts",
+    "replay:narrate": "node test/replay/run.ts --print"
+  }
+}
